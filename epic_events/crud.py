@@ -1,3 +1,6 @@
+from rich import print
+from rich.console import Console
+from rich.table import Table
 import sys
 import os
 
@@ -22,4 +25,23 @@ def add_client(session: Session, full_name: str, email: str, phone: str, company
     )
     session.add(new_client)
     session.commit()
-    print(f"Client '{full_name}' added successfully!")
+    print(f"[bold green]Client '{full_name}' added successfully![/bold green]")
+
+
+def get_all_clients(session: Session):
+    """Get all clients from the database."""
+    clients = session.query(Client).all()
+    
+    table_of_clients = Table(title="Clients")
+    
+    table_of_clients.add_column("ID", justify="right", style="cyan")
+    table_of_clients.add_column("Full Name", style="magenta")
+    table_of_clients.add_column("Email", style="green")
+    table_of_clients.add_column("Phone", style="yellow")
+    
+    for client in clients:
+        table_of_clients.add_row(str(client.id), client.full_name, client.email, client.phone)
+    console = Console()
+    console.print(table_of_clients)
+    # for client in clients:
+    #     print(f"[bold bright_blue]{client.id}: {client.full_name} - {client.email} - {client.phone}[/bold bright_blue]")
