@@ -75,12 +75,12 @@ def get_all_contracts(session: Session):
     """Retrieve all contracts from the database."""
     contracts = session.query(Contract).all()
     if not contracts:
-        print("[bold yellow]No contracts found.[/bold yellow]")
+        print("[bold red]No contracts found.[/bold red]")
         return
     
     table_of_contracts = Table(
-        title="[bold bright_blue]Epic Events Contracts[/bold bright_blue]",
-        title_style="white on blue",
+        title="[bold magenta]Epic Events Contracts[/bold magenta]",
+        title_style="white on orange_red1",
         title_justify="center",
         show_header=True,
         header_style="bold bright_white",
@@ -99,3 +99,57 @@ def get_all_contracts(session: Session):
     console = Console()
     console.print(table_of_contracts)
 
+def add_event(session: Session, contract_id: int, support_contact: str, start_date: str, end_date: str, location: str, attendees: int, notes: str = None):
+    """Add a new event to the database."""
+    
+    # Check if the contract exists and is signed
+    contract = session.query(Contract).filter(Contract.id == contract_id).first()
+    if not contract:
+        print("[bold red]Error: Contract ID does not exist.[/bold red]")
+        return
+    if not contract.signed:
+        print("[bold red]Error: Contract is not signed yet! Cannot create an event.[/bold red]")
+        return
+
+    new_event = Event(
+        contract_id=contract_id,
+        support_contact=support_contact,
+        start_date=start_date,
+        end_date=end_date,
+        location=location,
+        attendees=attendees,
+        notes=notes
+    )
+    session.add(new_event)
+    session.commit()
+    print(f"[bold green]Event for Contract ID {contract_id} added successfully![/bold green]")
+    
+def get_all_events(session: Session):
+    """Retrieve all events from the database."""
+    events = session.query(Event).all()
+    if not events:
+        print("[bold yellow]No events found.[/bold yellow]")
+        return
+
+    table_of_events = Table(
+        title="[bold blue]Epic Events[/bold blue]",
+        title_style="white on bright_white",
+        title_justify="center",
+        show_header=True,
+        header_style="bold bright_white",
+        border_style="blue"
+    )
+    
+    
+    table_of_events.add_column("ID", justify="right", style="cyan")
+    table_of_events.add_column("Contract ID", style="magenta")
+    table_of_events.add_column("Location", style="green")
+    table_of_events.add_column("Attendees", style="yellow")
+    table_of_events.add_column("Start Date", style="cyan")
+    table_of_events.add_column("End Date", style="magenta")
+    table_of_events.add_column("Notes", style="green")
+    
+    for event in events:
+        table_of_events.add_row(str(event.id), str(event.contract_id), event.location, str(event.attendees), str(event.start_date), str(event.end_date), event.notes)
+    console = Console()
+    console.print(table_of_events)
