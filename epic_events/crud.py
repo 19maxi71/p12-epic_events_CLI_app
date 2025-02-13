@@ -32,7 +32,14 @@ def get_all_clients(session: Session):
     """Get all clients from the database."""
     clients = session.query(Client).all()
     
-    table_of_clients = Table(title="Clients")
+    table_of_clients = Table(
+        title=f"[bold bright_blue]Epic Events Clients[/bold bright_blue]",
+        title_style="white on blue",
+        title_justify="center",
+        show_header=True,
+        header_style="bold bright_white",
+        border_style="blue"
+    )
     
     table_of_clients.add_column("ID", justify="right", style="cyan")
     table_of_clients.add_column("Full Name", style="magenta")
