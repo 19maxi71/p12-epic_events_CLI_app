@@ -1,6 +1,7 @@
 import sys
 import os
 from datetime import datetime
+import random
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/.."))
 
@@ -92,16 +93,58 @@ def test_read_access():
         get_all_contracts(session, user)
         get_all_events(session, user)
 
+def test_permissions():
+    session = get_db_session(SessionLocal)
 
+    # Authenticate as Admin
+    user = authenticate_user(session, "admin@email.com", "securepassword")
+    if user:
+        try:
+            # Add client
+            add_client(
+                session=session,
+                user=user,
+                full_name=f'BOT {datetime.now().timestamp()}',
+                email=f"client_{datetime.now().timestamp()}@email.com",
+                phone=f"+33+random.randint(100000000, 999999999)",
+                company_name=f"Boite de test {datetime.now().timestamp()}"
+            )
+
+            # Add contract - Updated parameters
+            add_contract(
+                session=session,
+                user=user,
+                client_id=1,
+                total_amount=random.randint(1000, 10000),
+                amount_due=random.randint(500, 5000),
+                signed=True
+            )
+
+            # Add event with proper datetime objects
+            add_event(
+                session=session,
+                user=user,
+                contract_id=1,
+                support_contact="Mec du support",
+                start_date=datetime.strptime("2025-06-10 14:00", "%Y-%m-%d %H:%M"),
+                end_date=datetime.strptime("2025-06-11 14:00", "%Y-%m-%d %H:%M"),
+                location="AVRANCHES",
+                attendees=100,
+                notes="RESTO DE COEUR"
+            )
+        except Exception as e:
+            print(f"[bold red]Error during test: {str(e)}[/bold red]")
+            session.rollback()
 
 if __name__ == "__main__":
-    # setup_database()
+    setup_database()
     # test_add_client()
     # test_get_clients()
     # test_add_contract()
     # test_get_contracts()
     # test_add_event()
     # test_get_events()
-    # test_user_creation()
+    test_user_creation()
     # test_authentication()
-    test_read_access()
+    # test_read_access()
+    test_permissions()

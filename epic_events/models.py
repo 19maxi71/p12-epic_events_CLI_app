@@ -55,7 +55,7 @@ class Contract(Base):
 
     id = Column(Integer, primary_key=True)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
-    sales_contact = Column(String, nullable=False) # mettre id de commercial
+    sales_contact_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Changed from String
     total_amount = Column(Float, nullable=False)
     amount_due = Column(Float, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -63,6 +63,7 @@ class Contract(Base):
     signed = Column(Boolean, default=False)
 
     client = relationship("Client", back_populates="contracts")
+    sales_contact = relationship("User")  # Add relationship to User model
 
     def __repr__(self):
         return f"<Contract {self.id} | Client {self.client_id} | Signed: {self.signed}>"
