@@ -14,22 +14,40 @@ class Role(Base):
     def __repr__(self):
         return f"<Role {self.id} | {self.name}>"
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    full_name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)  # Role reference
+    password_hash = Column(String, nullable=False)  # Store hashed password
+
+    role = relationship("Role")
+
+    def set_password(self, password):
+        """Hashes the password before storing it."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Checks if the entered password is correct."""
+        return check_password_hash(self.password_hash, password)
 
 
 class Client(Base):
-    __tablename__ = "clients" # table name in db
+    __tablename__ = "clients"
 
     id = Column(Integer, primary_key=True)
     full_name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=False)
     company_name = Column(String, nullable=False)
+    sales_contact_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Link to User
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    # rajouter le commercial
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
-    def __repr__(self):
-        return f"<Client {self.full_name} ({self.company_name})>"
+    sales_contact = relationship("User")  # Establish a relationship with User
+
 
 
 class Contract(Base):

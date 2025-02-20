@@ -5,8 +5,15 @@ from datetime import datetime
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/.."))
 
 from epic_events.config import engine, Base, SessionLocal
-from epic_events.models import Client, Contract, Event
-from epic_events.crud import add_client, get_db_session, get_all_clients, add_contract, get_all_contracts, add_event, get_all_events
+from epic_events.models import Client, Contract, Event, Role, User
+from epic_events.crud import (
+    add_client, get_db_session, get_all_clients, 
+    add_contract, get_all_contracts, add_event, 
+    get_all_events, create_user, authenticate_user
+)
+
+
+
 
 def setup_database():
     """Creates the database and tables."""
@@ -46,6 +53,47 @@ def test_get_events():
     session = get_db_session(SessionLocal)
     get_all_events(session)
 
+def test_user_creation():
+    session = get_db_session(SessionLocal)
+
+    # Check if roles already exist
+    existing_roles = session.query(Role).count()
+    if existing_roles == 0:
+        session.add_all([
+            Role(id=1, name="Admin"),
+            Role(id=2, name="Commercial"),
+            Role(id=3, name="Support"),
+            Role(id=4, name="Gestion")
+        ])
+        session.commit()
+        print("[bold green]Roles initialized successfully![/bold green]")
+    else:
+        print("[bold yellow]Roles already exist, skipping initialization.[/bold yellow]")
+
+    # Create a test user (only if they don't exist)
+    existing_user = session.query(User).filter_by(email="admin@email.com").first()
+    if not existing_user:
+        create_user(session, "John Admin", "admin@email.com", "securepassword", role_id=1)
+    else:
+        print("[bold yellow]User 'John Admin' already exists, skipping creation.[/bold yellow]")
+
+
+def test_authentication():
+    session = get_db_session(SessionLocal)
+    authenticate_user(session, "admin@email.com", "securepassword")
+
+def test_read_access():
+    session = get_db_session(SessionLocal)
+
+    # Authenticate as an example user
+    user = authenticate_user(session, "admin@email.com", "securepassword")
+    if user:
+        get_all_clients(session, user)
+        get_all_contracts(session, user)
+        get_all_events(session, user)
+
+
+
 if __name__ == "__main__":
     # setup_database()
     # test_add_client()
@@ -53,4 +101,7 @@ if __name__ == "__main__":
     # test_add_contract()
     # test_get_contracts()
     # test_add_event()
-    test_get_events()
+    # test_get_events()
+    # test_user_creation()
+    # test_authentication()
+    test_read_access()
