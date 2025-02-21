@@ -13,6 +13,7 @@ from epic_events.auth import (
     set_current_user, get_current_user, clear_current_user, 
     create_token, save_token
 )
+from datetime import datetime
 """Initialize the Typer app.
 This is the entry point of the CLI.
 """
@@ -76,13 +77,11 @@ def list_clients():
     if not user:
         typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
-    
+        
     get_all_clients(session, user)
 
 @app.command()
 def add_new_contract(
-    user_email: str = typer.Option(..., prompt=True, help="User email for authentication"),
-    password: str = typer.Option(..., prompt=True, hide_input=True, help="Password"),
     client_id: int = typer.Option(..., prompt=True),
     total_amount: float = typer.Option(..., prompt=True),
     amount_due: float = typer.Option(..., prompt=True),
@@ -90,47 +89,78 @@ def add_new_contract(
 ):
     """Add a new contract (Requires Admin or Commercial role)."""
     session = next(get_db())
-    user = authenticate_user(session, user_email, password)
+    user = get_current_user(session)
+    
     if not user:
-        typer.echo("[bold red]Invalid credentials. Please try again.[/bold red]")
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
+        
     add_contract(session, user, client_id, total_amount, amount_due, signed)
 
 @app.command()
-def list_contracts(
-    user_email: str = typer.Option(..., prompt=True, help="User email for authentication"),
-    password: str = typer.Option(..., prompt=True, hide_input=True, help="Password")
-):
+def list_contracts():
     """List all contracts (Read-Only for all users)."""
     session = next(get_db())
-    user = authenticate_user(session, user_email, password)
+    user = get_current_user(session)
+    
     if not user:
-        typer.echo("[bold red]Invalid credentials. Please try again.[/bold red]")
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
+    
     get_all_contracts(session, user)
 
 @app.command()
-def add_new_event(user_email: str, contract_id: int, support_contact: str, start_date: str, end_date: str, location: str, attendees: int, notes: str = None):
+def add_new_event(
+    contract_id: int = typer.Option(..., prompt=True),
+    support_contact: str = typer.Option(..., prompt=True),
+    start_date: str = typer.Option(..., prompt=True, help="Format: YYYY-MM-DD HH:MM"),
+    end_date: str = typer.Option(..., prompt=True, help="Format: YYYY-MM-DD HH:MM"),
+    location: str = typer.Option(..., prompt=True),
+    attendees: int = typer.Option(..., prompt=True),
+    notes: str = typer.Option("", prompt=True, help="Optional notes about the event")
+):
     """Add a new event (Requires Admin, Support, or Gestion role)."""
     session = next(get_db())
-    user = session.query(User).filter(User.email == user_email).first()
+    user = get_current_user(session)
+    
     if not user:
-        typer.echo("[blink bold red]User not found.[/blink bold red]")
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
 
-    add_event(session, user, contract_id, support_contact, start_date, end_date, location, attendees, notes)
+    try:
+        # Convert string dates to datetime objects
+        start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+        end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+        
+        # If notes is empty string, set to None
+        notes = notes if notes else None
+        
+        add_event(
+            session=session,
+            user=user,
+            contract_id=contract_id,
+            support_contact=support_contact,
+            start_date=start_datetime,
+            end_date=end_datetime,
+            location=location,
+            attendees=attendees,
+            notes=notes
+        )
+    except ValueError as e:
+        typer.echo("[bold red]Error: Invalid date format. Use YYYY-MM-DD[/bold red]")
+    except Exception as e:
+        typer.echo(f"[bold red]Error creating event: {str(e)}[/bold red]")
 
 @app.command()
-def list_events(
-    user_email: str = typer.Option(..., prompt=True, help="User email for authentication"),
-    password: str = typer.Option(..., prompt=True, hide_input=True, help="Password")
-):
+def list_events():
     """List all events (Read-Only for all users)."""
     session = next(get_db())
-    user = authenticate_user(session, user_email, password)
+    user = get_current_user(session)
+    
     if not user:
-        typer.echo("[bold red]Invalid credentials. Please try again.[/bold red]")
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
+    
     get_all_events(session, user)
 
 if __name__ == "__main__":
