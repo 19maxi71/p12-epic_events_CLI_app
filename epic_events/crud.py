@@ -72,7 +72,8 @@ def delete_client(session: Session, user: User, client_id: int):
     print(f"[bold green]Client '{client.full_name}' deleted successfully![/bold green]")
 
 def get_all_clients(session: Session, user: User):
-    """Retrieve all clients from the database. Everyone can read, but only authorized roles can edit."""
+    """GET all clients from the database. 
+    Everyone can read, but only authorized roles can edit."""
     clients = session.query(Client).all()
     
     table_of_clients = Table(
@@ -88,9 +89,16 @@ def get_all_clients(session: Session, user: User):
     table_of_clients.add_column("Full Name", style="magenta")
     table_of_clients.add_column("Email", style="green")
     table_of_clients.add_column("Phone", style="yellow")
+    table_of_clients.add_column("Company", style="blue")  # Fixed: Added as column
     
     for client in clients:
-        table_of_clients.add_row(str(client.id), client.full_name, client.email, client.phone)
+        table_of_clients.add_row(
+            str(client.id), 
+            client.full_name, 
+            client.email, 
+            client.phone,
+            client.company_name  # Added company_name to the row
+        )
     
     console = Console()
     console.print(table_of_clients)
