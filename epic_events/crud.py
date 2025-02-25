@@ -338,3 +338,260 @@ def update_event(session: Session, user: User, event_id: int, support_contact: s
 
     session.commit()
     print(f"[bold green]Event {event.id} updated successfully![/bold green]")
+
+def filter_events(user: User, session: Session,
+                 event_id: int = None,
+                 contract_id: int = None,
+                 support_contact: str = None,
+                 start_date: datetime = None,
+                 end_date: datetime = None,
+                 location: str = None,
+                 attendees: int = None):
+    """Filter events by any criteria with role-based access."""
+    try:
+        # Start with base query
+        query = session.query(Event)
+
+        # Apply filters based on provided parameters
+        if event_id:
+            query = query.filter(Event.id == event_id)
+        if contract_id:
+            query = query.filter(Event.contract_id == contract_id)
+        if support_contact:
+            query = query.filter(Event.support_contact == support_contact)
+        if start_date:
+            query = query.filter(Event.start_date >= start_date)
+        if end_date:
+            query = query.filter(Event.end_date <= end_date)
+        if location:
+            query = query.filter(Event.location.ilike(f"%{location}%"))
+        if attendees:
+            query = query.filter(Event.attendees == attendees)
+
+        # Role-based filtering
+        if user.role_id == 3:  # Support
+            query = query.filter(Event.support_contact == user.full_name)
+        elif user.role_id == 4:  # Gestion
+            query = query.filter(Event.support_contact == None)
+
+        events = query.all()
+        if not events:
+            print("[bold yellow]No events found with these criteria.[/bold yellow]")
+            return
+
+        _display_events_table(events)
+
+    except Exception as e:
+        print(f"[bold red]Error filtering events: {str(e)}[/bold red]")
+
+def filter_events_by_role(session: Session, user: User, **filters):
+    """Filter events by any criteria with role-based access."""
+    try:
+        # Start with base query
+        query = session.query(Event)
+
+        # Apply filters based on provided parameters
+        if filters.get('event_id'):
+            query = query.filter(Event.id == filters['event_id'])
+        if filters.get('contract_id'):
+            query = query.filter(Event.contract_id == filters['contract_id'])
+        if filters.get('support_contact'):
+            query = query.filter(Event.support_contact == filters['support_contact'])
+        if filters.get('start_date'):
+            query = query.filter(Event.start_date >= filters['start_date'])
+        if filters.get('end_date'):
+            query = query.filter(Event.end_date <= filters['end_date'])
+        if filters.get('location'):
+            query = query.filter(Event.location.ilike(f"%{filters['location']}%"))
+        if filters.get('attendees'):
+            query = query.filter(Event.attendees == filters['attendees'])
+
+        # Add role-based filtering
+        if user.role_id == 3:  # Support
+            query = query.filter(Event.support_contact == user.full_name)
+        elif user.role_id == 4:  # Gestion
+            query = query.filter(Event.support_contact == None)
+
+        events = query.all()
+        if not events:
+            print("[bold yellow]No events found with these criteria.[/bold yellow]")
+            return
+
+        _display_events_table(events)
+
+    except Exception as e:
+        print(f"[bold red]Error filtering events: {str(e)}[/bold red]")
+
+def filter_contracts_by_role(session: Session, user: User):
+    """Filter contracts based on user role."""
+    
+    try:
+        if user.role_id == 1:  # Admin
+            print("[bold green]As Admin, you can see all event filters:[/bold green]")
+            # Show both unassigned and all events
+            unassigned_events = session.query(Event).filter(
+                Event.support_contact == None
+            ).all()
+            all_events = session.query(Event).all()
+            
+            if unassigned_events:
+                print("\n[bold yellow]Unassigned events:[/bold yellow]")
+                _display_events_table(unassigned_events)
+            
+            print("\n[bold yellow]All events:[/bold yellow]")
+            _display_events_table(all_events)
+            
+        elif user.role_id == 3:  # Support
+            events = session.query(Event).filter(
+                Event.support_contact == user.full_name
+            ).all()
+            if not events:
+                print("[bold yellow]No events assigned to you.[/bold yellow]")
+                return
+                
+            print(f"[bold green]Events assigned to {user.full_name}:[/bold green]")
+            _display_events_table(events)
+            
+        elif user.role_id == 4:  # Gestion
+            events = session.query(Event).filter(
+                Event.support_contact == None
+            ).all()
+            if not events:
+                print("[bold yellow]No unassigned events found.[/bold yellow]")
+                return
+                
+            print("[bold green]Unassigned events:[/bold green]")
+            _display_events_table(events)
+            
+        else:
+            print("[bold red]Error: Your role cannot filter events.[/bold red]")
+            
+    except Exception as e:
+        print(f"[bold red]Error filtering events: {str(e)}[/bold red]")
+
+def _display_events_table(events):
+    """Helper function to display events in a table."""
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("ID", style="dim")
+    table.add_column("Contract")
+    table.add_column("Support Contact")
+    table.add_column("Start Date")
+    table.add_column("Location")
+    table.add_column("Attendees")
+    
+    for event in events:
+        table.add_row(
+            str(event.id),
+            str(event.contract_id),
+            event.support_contact or "Unassigned",
+            event.start_date.strftime("%Y-%m-%d"),
+            event.location,
+            str(event.attendees)
+        )
+    
+    console = Console()
+    console.print(table)
+
+def filter_contracts_by_role(session: Session, user: User):
+    """Filter contracts based on user role."""
+    try:
+        if user.role_id == 1:  # Admin
+            print("[bold green]As Admin, you can see all contract filters:[/bold green]")
+            # Show both unsigned and all contracts
+            unsigned_contracts = session.query(Contract).filter(
+                Contract.signed == False
+            ).all()
+            all_contracts = session.query(Contract).all()
+            
+            if unsigned_contracts:
+                print("\n[bold yellow]Unsigned contracts:[/bold yellow]")
+                _display_contracts_table(unsigned_contracts)
+            
+            print("\n[bold yellow]All contracts:[/bold yellow]")
+            _display_contracts_table(all_contracts)
+            
+        elif user.role_id == 2:  # Commercial
+            contracts = session.query(Contract).filter(
+                Contract.signed == False,
+                Contract.sales_contact_id == user.id
+            ).all()
+            
+            if not contracts:
+                print("[bold yellow]No unsigned contracts found.[/bold yellow]")
+                return
+                
+            print("[bold green]Your unsigned contracts:[/bold green]")
+            _display_contracts_table(contracts)
+        else:
+            print("[bold red]Error: Your role cannot filter contracts.[/bold red]")
+            
+    except Exception as e:
+        print(f"[bold red]Error filtering contracts: {str(e)}[/bold red]")
+
+def _display_contracts_table(contracts):
+    """Helper function to display contracts in a table."""
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("ID", style="dim")
+    table.add_column("Client ID")
+    table.add_column("Total Amount")
+    table.add_column("Amount Due")
+    table.add_column("Status")
+    
+    for contract in contracts:
+        status = "[green]Signed[/green]" if contract.signed else "[red]Not Signed[/red]"
+        table.add_row(
+            str(contract.id),
+            str(contract.client_id),
+            f"${contract.total_amount:,.2f}",
+            f"${contract.amount_due:,.2f}",
+            status
+        )
+    
+    console = Console()
+    console.print(table)
+
+def filter_contracts(session: Session, user: User,
+                    contract_id: int = None,
+                    client_id: int = None,
+                    total_amount_min: float = None,
+                    total_amount_max: float = None,
+                    signed: bool = None,
+                    date_min: datetime = None,
+                    date_max: datetime = None):
+    """Filter contracts by any parameter."""
+    try:
+        # Start with base query
+        query = session.query(Contract)
+
+        # Apply filters based on provided parameters
+        if contract_id:
+            query = query.filter(Contract.id == contract_id)
+        if client_id:
+            query = query.filter(Contract.client_id == client_id)
+        if total_amount_min:
+            query = query.filter(Contract.total_amount >= total_amount_min)
+        if total_amount_max:
+            query = query.filter(Contract.total_amount <= total_amount_max)
+        if signed is not None:
+            query = query.filter(Contract.signed == signed)
+        if date_min:
+            query = query.filter(Contract.created_at >= date_min)
+        if date_max:
+            query = query.filter(Contract.created_at <= date_max)
+
+        # Role-based filtering
+        if user.role_id == 2:  # Commercial
+            query = query.filter(Contract.sales_contact_id == user.id)
+        elif user.role_id != 1:  # Not Admin
+            print("[bold red]Error: Your role cannot filter contracts.[/bold red]")
+            return
+
+        contracts = query.all()
+        if not contracts:
+            print("[bold yellow]No contracts found with these criteria.[/bold yellow]")
+            return
+
+        _display_contracts_table(contracts)
+
+    except Exception as e:
+        print(f"[bold red]Error filtering contracts: {str(e)}[/bold red]")

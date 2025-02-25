@@ -6,7 +6,9 @@ from epic_events.crud import (
     add_event, get_all_events, create_user, authenticate_user,
     update_client as crud_update_client,
     update_contract as crud_update_contract,
-    update_event as crud_update_event
+    update_event as crud_update_event,
+    filter_events_by_role,
+    filter_contracts_by_role
 )
 from epic_events.models import User
 from rich import print
@@ -259,6 +261,56 @@ def update_event(
         typer.echo("[bold red]Error: Invalid date format. Use YYYY-MM-DD[/bold red]")
     except Exception as e:
         typer.echo(f"[bold red]Error updating event: {str(e)}[/bold red]")
+
+@app.command()
+def filter_events(
+    event_id: int = typer.Option(None, "--id", help="Filter by event ID"),
+    contract_id: int = typer.Option(None, "--contract", help="Filter by contract ID"),
+    support_contact: str = typer.Option(None, "--support", help="Filter by support contact"),
+    start_date: str = typer.Option(None, "--start", help="Filter by start date (YYYY-MM-DD)"),
+    end_date: str = typer.Option(None, "--end", help="Filter by end date (YYYY-MM-DD)"),
+    location: str = typer.Option(None, "--location", help="Filter by location"),
+    attendees: int = typer.Option(None, "--attendees", help="Filter by number of attendees")
+):
+    """Filter events by any criteria."""
+    session = next(get_db())
+    user = get_current_user(session)
+    
+    if not user:
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        return
+
+    # Convert dates if provided
+    start = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+    end = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
+
+    # Create filters dictionary with only non-None values
+    filters = {
+        'event_id': event_id,
+        'contract_id': contract_id,
+        'support_contact': support_contact,
+        'start_date': start,
+        'end_date': end,
+        'location': location,
+        'attendees': attendees
+    }
+    
+    # Remove None values
+    filters = {k: v for k, v in filters.items() if v is not None}
+
+    filter_events_by_role(session=session, user=user, **filters)
+
+@app.command()
+def filter_contracts():
+    """Filter contracts based on role (Commercial → Unsigned contracts)."""
+    session = next(get_db())
+    user = get_current_user(session)
+
+    if not user:
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        return
+
+    filter_contracts_by_role(session, user)
 
 if __name__ == "__main__":
     app()
