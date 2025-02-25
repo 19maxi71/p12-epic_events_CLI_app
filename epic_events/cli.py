@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 from epic_events.config import SessionLocal
 from epic_events.crud import (
     add_client, get_all_clients, add_contract, get_all_contracts, 
-    add_event, get_all_events, create_user, authenticate_user
+    add_event, get_all_events, create_user, authenticate_user,
+    update_client as crud_update_client,
+    update_contract as crud_update_contract,
+    update_event as crud_update_event
 )
 from epic_events.models import User
 from rich import print
@@ -166,62 +169,96 @@ def list_events():
 @app.command()
 def update_client(
     client_id: int = typer.Option(..., prompt=True),
-    full_name: str = typer.Option(None, prompt="New Full Name (press Enter to skip)", show_default=False),
-    email: str = typer.Option(None, prompt="New Email (press Enter to skip)", show_default=False),
-    phone: str = typer.Option(None, prompt="New Phone (press Enter to skip)", show_default=False),
-    company_name: str = typer.Option(None, prompt="New Company Name (press Enter to skip)", show_default=False)
+    full_name: str = typer.Option(..., prompt=True),
+    email: str = typer.Option(..., prompt=True),
+    phone: str = typer.Option(..., prompt=True),
+    company_name: str = typer.Option(..., prompt=True)
 ):
-    """Update client details (Requires Admin or assigned Commercial role)."""
+    """Update an existing client (Requires Admin or Commercial role)."""
     session = next(get_db())
     user = get_current_user(session)
-
+    
     if not user:
         typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
 
-    update_client(session, user, client_id, full_name, email, phone, company_name)
+    crud_update_client( 
+        session=session,
+        user=user,
+        client_id=client_id,
+        full_name=full_name,
+        email=email,
+        phone=phone,
+        company_name=company_name
+    )
 
 @app.command()
 def update_contract(
     contract_id: int = typer.Option(..., prompt=True),
-    total_amount: float = typer.Option(None, prompt="New Total Amount (press Enter to skip)", show_default=False),
-    amount_due: float = typer.Option(None, prompt="New Amount Due (press Enter to skip)", show_default=False),
-    signed: bool = typer.Option(None, prompt="Change Signed Status (True/False, press Enter to skip)", show_default=False)
+    total_amount: float = typer.Option(..., prompt=True),
+    amount_due: float = typer.Option(..., prompt=True),
+    signed: bool = typer.Option(..., prompt=True)
 ):
     """Update contract details (Requires Admin, Gestion, or assigned Commercial role)."""
     session = next(get_db())
     user = get_current_user(session)
-
+    
     if not user:
         typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
 
-    update_contract(session, user, contract_id, total_amount, amount_due, signed)
+    crud_update_contract(
+        session=session,
+        user=user,
+        contract_id=contract_id,
+        total_amount=total_amount,
+        amount_due=amount_due,
+        signed=signed
+    )
 
 @app.command()
 def update_event(
     event_id: int = typer.Option(..., prompt=True),
-    support_contact: str = typer.Option(None, prompt="New Support Contact (press Enter to skip)", show_default=False),
-    start_date: str = typer.Option(None, prompt="New Start Date (YYYY-MM-DD, press Enter to skip)", show_default=False),
-    end_date: str = typer.Option(None, prompt="New End Date (YYYY-MM-DD, press Enter to skip)", show_default=False),
-    location: str = typer.Option(None, prompt="New Location (press Enter to skip)", show_default=False),
-    attendees: int = typer.Option(None, prompt="New Number of Attendees (press Enter to skip)", show_default=False),
-    notes: str = typer.Option(None, prompt="New Notes (press Enter to skip)", show_default=False)
+    support_contact: str = typer.Option(None, prompt="New Support Contact (press Enter to skip)"),
+    start_date: str = typer.Option(None, prompt="New Start Date (YYYY-MM-DD, press Enter to skip)"),
+    end_date: str = typer.Option(None, prompt="New End Date (YYYY-MM-DD, press Enter to skip)"),
+    location: str = typer.Option(None, prompt="New Location (press Enter to skip)"),
+    attendees: int = typer.Option(None, prompt="New Number of Attendees (press Enter to skip)"),
+    notes: str = typer.Option(None, prompt="New Notes (press Enter to skip)")
 ):
     """Update event details (Requires Admin or assigned Support role)."""
     session = next(get_db())
     user = get_current_user(session)
-
+    
     if not user:
         typer.echo("[bold red]Please login first: epic-events login[/bold red]")
         return
 
-    # Convert dates if provided
-    start_datetime = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
-    end_datetime = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
+    try:
+        # Convert dates if provided
+        start_datetime = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+        end_datetime = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
 
-    update_event(session, user, event_id, support_contact, start_datetime, end_datetime, location, attendees, notes)
-
+        # Convert empty strings to None
+        support_contact = support_contact if support_contact and support_contact.strip() else None
+        location = location if location and location.strip() else None
+        notes = notes if notes and notes.strip() else None
+        
+        crud_update_event(
+            session=session,
+            user=user,
+            event_id=event_id,
+            support_contact=support_contact,
+            start_date=start_datetime,
+            end_date=end_datetime,
+            location=location,
+            attendees=attendees,
+            notes=notes
+        )
+    except ValueError as e:
+        typer.echo("[bold red]Error: Invalid date format. Use YYYY-MM-DD[/bold red]")
+    except Exception as e:
+        typer.echo(f"[bold red]Error updating event: {str(e)}[/bold red]")
 
 if __name__ == "__main__":
     app()

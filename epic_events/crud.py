@@ -7,9 +7,9 @@ import sentry_sdk
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/.."))
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 from epic_events.models import Client, Contract, Event, Role, User
-from datetime import datetime
+from datetime import datetime, timezone
 
 def get_db_session(SessionLocal):
     """Create a new database session."""
@@ -35,25 +35,31 @@ def add_client(session: Session, user: User, full_name: str, email: str, phone: 
     print(f"[bold green]Client '{full_name}' added successfully![/bold green]")
 
 
-def update_client(session: Session, user: User, client_id: int, new_name: str = None, new_email: str = None):
+def update_client(session: Session, user: User, client_id: int, full_name: str, email: str, phone: str, company_name: str):
     """Update client details with role-based access control."""
     
-    if user.role_id not in [1, 2]:  # Only Admin and Commercial can update clients
-        print("[bold red]Error: You do not have permission to update clients.[/bold red]")
-        return
-
     client = session.query(Client).filter(Client.id == client_id).first()
     if not client:
         print("[bold red]Error: Client not found.[/bold red]")
         return
+    
+    # Permission check
+    if user.role_id not in [1, 2]:  # Only Admin and Commercial can update
+        print("[bold red]Error: You do not have permission to update clients.[/bold red]")
+        return
 
-    if new_name:
-        client.full_name = new_name
-    if new_email:
-        client.email = new_email
-
-    session.commit()
-    print(f"[bold green]Client '{client.full_name}' updated successfully![/bold green]")
+    try:
+        client.full_name = full_name
+        client.email = email
+        client.phone = phone
+        client.company_name = company_name
+        client.updated_at = datetime.now(timezone.utc)
+        
+        session.commit()
+        print(f"[bold green]Client '{client.full_name}' updated successfully![/bold green]")
+    except Exception as e:
+        session.rollback()
+        print(f"[bold red]Error updating client: {str(e)}[/bold red]")
 
 def delete_client(session: Session, user: User, client_id: int):
     """Delete a client with role-based access control."""
@@ -278,33 +284,7 @@ def authenticate_user(session: Session, email: str, password: str):
         print("[bold red]Error: Invalid email or password![/bold red]")
         return None
 
-def update_client(session: Session, user: User, client_id: int, full_name: str = None, email: str = None, phone: str = None, company_name: str = None):
-    """Update client details with role-based access control."""
-    
-    client = session.query(Client).filter(Client.id == client_id).first()
-    if not client:
-        print("[bold red]Error: Client not found.[/bold red]")
-        return
-    
-    # Only Admin or the Commercial assigned to this client can update
-    if user.role_id not in [1, 2] or (user.role_id == 2 and client.sales_contact_id != user.id):
-        print("[bold red]Error: You do not have permission to update this client.[/bold red]")
-        return
-
-    # Update only provided fields
-    if full_name:
-        client.full_name = full_name
-    if email:
-        client.email = email
-    if phone:
-        client.phone = phone
-    if company_name:
-        client.company_name = company_name
-
-    session.commit()
-    print(f"[bold green]Client '{client.full_name}' updated successfully![/bold green]")
-
-def update_contract(session: Session, user: User, contract_id: int, total_amount: float = None, amount_due: float = None, signed: bool = None):
+def update_contract(session: Session, user: User, contract_id: int, total_amount: float, amount_due: float, signed: bool):
     """Update contract details with role-based access control."""
     
     contract = session.query(Contract).filter(Contract.id == contract_id).first()
@@ -312,21 +292,22 @@ def update_contract(session: Session, user: User, contract_id: int, total_amount
         print("[bold red]Error: Contract not found.[/bold red]")
         return
 
-    # Gestion team can update all contracts, Commercial can only update their own
+    # Only Admin, Gestion, or the assigned Commercial can update contracts
     if user.role_id not in [1, 2, 4] or (user.role_id == 2 and contract.sales_contact_id != user.id):
         print("[bold red]Error: You do not have permission to update this contract.[/bold red]")
         return
 
-    # Update only provided fields
-    if total_amount is not None:
+    try:
         contract.total_amount = total_amount
-    if amount_due is not None:
         contract.amount_due = amount_due
-    if signed is not None:
         contract.signed = signed
-
-    session.commit()
-    print(f"[bold green]Contract {contract.id} updated successfully![/bold green]")
+        contract.updated_at = datetime.now(timezone.utc)
+        
+        session.commit()
+        print(f"[bold green]Contract #{contract_id} updated successfully![/bold green]")
+    except Exception as e:
+        session.rollback()
+        print(f"[bold red]Error updating contract: {str(e)}[/bold red]")
 
 def update_event(session: Session, user: User, event_id: int, support_contact: str = None, start_date: datetime = None, end_date: datetime = None, location: str = None, attendees: int = None, notes: str = None):
     """Update event details with role-based access control."""
