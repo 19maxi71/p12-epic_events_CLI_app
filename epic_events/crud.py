@@ -76,6 +76,7 @@ def get_all_clients(session: Session, user: User):
     Everyone can read, but only authorized roles can edit."""
     clients = session.query(Client).all()
     
+    
     table_of_clients = Table(
         title=f"[bold bright_blue]Epic Events Clients[/bold bright_blue]",
         title_style="white on blue",

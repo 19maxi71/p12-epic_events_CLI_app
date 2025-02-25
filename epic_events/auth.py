@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from pathlib import Path
@@ -15,7 +15,7 @@ def create_token(user_email: str, role: str) -> str:
     data = {
         "sub": user_email,
         "role": role,
-        "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     }
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
