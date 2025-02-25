@@ -277,3 +277,83 @@ def authenticate_user(session: Session, email: str, password: str):
         sentry_sdk.capture_message(f"Failed login attempt for {email}", level="warning")
         print("[bold red]Error: Invalid email or password![/bold red]")
         return None
+
+def update_client(session: Session, user: User, client_id: int, full_name: str = None, email: str = None, phone: str = None, company_name: str = None):
+    """Update client details with role-based access control."""
+    
+    client = session.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        print("[bold red]Error: Client not found.[/bold red]")
+        return
+    
+    # Only Admin or the Commercial assigned to this client can update
+    if user.role_id not in [1, 2] or (user.role_id == 2 and client.sales_contact_id != user.id):
+        print("[bold red]Error: You do not have permission to update this client.[/bold red]")
+        return
+
+    # Update only provided fields
+    if full_name:
+        client.full_name = full_name
+    if email:
+        client.email = email
+    if phone:
+        client.phone = phone
+    if company_name:
+        client.company_name = company_name
+
+    session.commit()
+    print(f"[bold green]Client '{client.full_name}' updated successfully![/bold green]")
+
+def update_contract(session: Session, user: User, contract_id: int, total_amount: float = None, amount_due: float = None, signed: bool = None):
+    """Update contract details with role-based access control."""
+    
+    contract = session.query(Contract).filter(Contract.id == contract_id).first()
+    if not contract:
+        print("[bold red]Error: Contract not found.[/bold red]")
+        return
+
+    # Gestion team can update all contracts, Commercial can only update their own
+    if user.role_id not in [1, 2, 4] or (user.role_id == 2 and contract.sales_contact_id != user.id):
+        print("[bold red]Error: You do not have permission to update this contract.[/bold red]")
+        return
+
+    # Update only provided fields
+    if total_amount is not None:
+        contract.total_amount = total_amount
+    if amount_due is not None:
+        contract.amount_due = amount_due
+    if signed is not None:
+        contract.signed = signed
+
+    session.commit()
+    print(f"[bold green]Contract {contract.id} updated successfully![/bold green]")
+
+def update_event(session: Session, user: User, event_id: int, support_contact: str = None, start_date: datetime = None, end_date: datetime = None, location: str = None, attendees: int = None, notes: str = None):
+    """Update event details with role-based access control."""
+    
+    event = session.query(Event).filter(Event.id == event_id).first()
+    if not event:
+        print("[bold red]Error: Event not found.[/bold red]")
+        return
+
+    # Only Admin or assigned Support can update
+    if user.role_id not in [1, 3] or (user.role_id == 3 and event.support_contact != user.full_name):
+        print("[bold red]Error: You do not have permission to update this event.[/bold red]")
+        return
+
+    # Update only provided fields
+    if support_contact:
+        event.support_contact = support_contact
+    if start_date:
+        event.start_date = start_date
+    if end_date:
+        event.end_date = end_date
+    if location:
+        event.location = location
+    if attendees is not None:
+        event.attendees = attendees
+    if notes is not None:
+        event.notes = notes
+
+    session.commit()
+    print(f"[bold green]Event {event.id} updated successfully![/bold green]")

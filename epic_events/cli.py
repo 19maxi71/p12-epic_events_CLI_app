@@ -162,6 +162,66 @@ def list_events():
         return
     
     get_all_events(session, user)
+      
+@app.command()
+def update_client(
+    client_id: int = typer.Option(..., prompt=True),
+    full_name: str = typer.Option(None, prompt="New Full Name (press Enter to skip)", show_default=False),
+    email: str = typer.Option(None, prompt="New Email (press Enter to skip)", show_default=False),
+    phone: str = typer.Option(None, prompt="New Phone (press Enter to skip)", show_default=False),
+    company_name: str = typer.Option(None, prompt="New Company Name (press Enter to skip)", show_default=False)
+):
+    """Update client details (Requires Admin or assigned Commercial role)."""
+    session = next(get_db())
+    user = get_current_user(session)
+
+    if not user:
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        return
+
+    update_client(session, user, client_id, full_name, email, phone, company_name)
+
+@app.command()
+def update_contract(
+    contract_id: int = typer.Option(..., prompt=True),
+    total_amount: float = typer.Option(None, prompt="New Total Amount (press Enter to skip)", show_default=False),
+    amount_due: float = typer.Option(None, prompt="New Amount Due (press Enter to skip)", show_default=False),
+    signed: bool = typer.Option(None, prompt="Change Signed Status (True/False, press Enter to skip)", show_default=False)
+):
+    """Update contract details (Requires Admin, Gestion, or assigned Commercial role)."""
+    session = next(get_db())
+    user = get_current_user(session)
+
+    if not user:
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        return
+
+    update_contract(session, user, contract_id, total_amount, amount_due, signed)
+
+@app.command()
+def update_event(
+    event_id: int = typer.Option(..., prompt=True),
+    support_contact: str = typer.Option(None, prompt="New Support Contact (press Enter to skip)", show_default=False),
+    start_date: str = typer.Option(None, prompt="New Start Date (YYYY-MM-DD, press Enter to skip)", show_default=False),
+    end_date: str = typer.Option(None, prompt="New End Date (YYYY-MM-DD, press Enter to skip)", show_default=False),
+    location: str = typer.Option(None, prompt="New Location (press Enter to skip)", show_default=False),
+    attendees: int = typer.Option(None, prompt="New Number of Attendees (press Enter to skip)", show_default=False),
+    notes: str = typer.Option(None, prompt="New Notes (press Enter to skip)", show_default=False)
+):
+    """Update event details (Requires Admin or assigned Support role)."""
+    session = next(get_db())
+    user = get_current_user(session)
+
+    if not user:
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        return
+
+    # Convert dates if provided
+    start_datetime = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+    end_datetime = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
+
+    update_event(session, user, event_id, support_contact, start_datetime, end_datetime, location, attendees, notes)
+
 
 if __name__ == "__main__":
     app()
