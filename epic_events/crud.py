@@ -260,18 +260,28 @@ def get_all_events(session: Session, user: User):
 
 def create_user(session: Session, full_name: str, email: str, password: str, role_id: int):
     """Create a new user with a hashed password."""
-    
-    # Check if role exists
-    role = session.query(Role).filter(Role.id == role_id).first()
-    if not role:
-        print("[bold red]Error: Invalid role ID.[/bold red]")
-        return
+    try:
+        # Check if role exists
+        role = session.query(Role).filter(Role.id == role_id).first()
+        if not role:
+            print("[bold red]Error: Invalid role ID.[/bold red]")
+            return
 
-    new_user = User(full_name=full_name, email=email, role_id=role_id)
-    new_user.set_password(password)  # Hash the password before saving
-    session.add(new_user)
-    session.commit()
-    print(f"[bold green]User '{full_name}' created successfully![/bold green]")
+        new_user = User(full_name=full_name, email=email, role_id=role_id)
+        new_user.set_password(password)  # Hash the password before saving
+        session.add(new_user)
+        session.commit()
+        
+        # Log successful user creation
+        sentry_sdk.capture_message(
+            f"New user created: {full_name}",
+            level="info"
+        )
+        print(f"[bold green]User '{full_name}' created successfully![/bold green]")
+    except Exception as e:
+        session.rollback()
+        sentry_sdk.capture_exception(e)
+        raise
 
 
 def authenticate_user(session: Session, email: str, password: str):
@@ -287,28 +297,37 @@ def authenticate_user(session: Session, email: str, password: str):
 
 def update_contract(session: Session, user: User, contract_id: int, total_amount: float, amount_due: float, signed: bool):
     """Update contract details with role-based access control."""
-    
-    contract = session.query(Contract).filter(Contract.id == contract_id).first()
-    if not contract:
-        print("[bold red]Error: Contract not found.[/bold red]")
-        return
-
-    # Only Admin, Gestion, or the assigned Commercial can update contracts
-    if user.role_id not in [1, 2, 4] or (user.role_id == 2 and contract.sales_contact_id != user.id):
-        print("[bold red]Error: You do not have permission to update this contract.[/bold red]")
-        return
-
     try:
+        contract = session.query(Contract).filter(Contract.id == contract_id).first()
+        if not contract:
+            print("[bold red]Error: Contract not found.[/bold red]")
+            return
+
+        # Only Admin, Gestion, or the assigned Commercial can update contracts
+        if user.role_id not in [1, 2, 4] or (user.role_id == 2 and contract.sales_contact_id != user.id):
+            print("[bold red]Error: You do not have permission to update this contract.[/bold red]")
+            return
+
         contract.total_amount = total_amount
         contract.amount_due = amount_due
         contract.signed = signed
         contract.updated_at = datetime.now(timezone.utc)
         
+        if signed and not contract.signed:  # Contract is being signed
+            sentry_sdk.capture_message(
+                f"Contract #{contract_id} signed",
+                level="info",
+                extras={
+                    'client_id': contract.client_id,
+                    'signed_by': user.full_name,
+                }
+            )
         session.commit()
         print(f"[bold green]Contract #{contract_id} updated successfully![/bold green]")
     except Exception as e:
         session.rollback()
-        print(f"[bold red]Error updating contract: {str(e)}[/bold red]")
+        sentry_sdk.capture_exception(e)
+        raise
 
 def update_event(session: Session, user: User, event_id: int, support_contact: str = None, start_date: datetime = None, end_date: datetime = None, location: str = None, attendees: int = None, notes: str = None):
     """Update event details with role-based access control."""

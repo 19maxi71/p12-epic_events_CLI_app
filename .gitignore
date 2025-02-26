@@ -9,6 +9,7 @@ __pycache__/
 
 # Ignore the SQLite database file
 database.db
+*.db
 
 # Ignore logs and debugging files
 logs/
