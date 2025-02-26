@@ -27,11 +27,15 @@ cp .env.example .env
 # Edit .env with your Sentry DSN and other configurations
 ```
 
-5. Initialize database
+5. Initialize database (first time setup only)
 ```bash
 python init_db.py
 ```
 
+6. (Optional) Add test data for development:
+```bash
+python seed_test_data.py
+```
 ## Usage
 
 Basic commands:
