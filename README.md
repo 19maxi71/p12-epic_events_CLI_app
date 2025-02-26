@@ -191,6 +191,23 @@ Email: admin@email.com
 Password: securepassword
 ```
 
+## Test Data Generation
+
+To populate the database with sample data:
+
+```bash
+# Install all requirements (includes Faker)
+pip install -r requirements.txt
+
+# Generate test data
+python seed_test_data.py
+```
+
+This will create:
+- 5 clients with French localized data
+- 1-3 contracts per client
+- 1-5 events per contract
+
 ## Project Structure
 
 ```

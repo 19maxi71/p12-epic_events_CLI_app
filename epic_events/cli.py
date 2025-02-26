@@ -1,5 +1,4 @@
 import typer
-from sqlalchemy.orm import Session
 from epic_events.config import SessionLocal
 from epic_events.crud import (
     add_client, get_all_clients, add_contract, get_all_contracts, 
@@ -16,7 +15,7 @@ from rich import print
 from rich.console import Console
 from rich.table import Table
 from epic_events.auth import ( 
-    set_current_user, get_current_user, clear_current_user, 
+    get_current_user, clear_current_user, 
     create_token, save_token
 )
 from datetime import datetime

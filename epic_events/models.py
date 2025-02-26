@@ -77,7 +77,7 @@ class Event(Base):
 
     id = Column(Integer, primary_key=True)
     contract_id = Column(Integer, ForeignKey("contracts.id"), nullable=False)
-    support_contact = Column(String, nullable=True)  # id de l'employé
+    support_contact = Column(String, nullable=True)  # id of the support contact
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
     location = Column(String, nullable=False)

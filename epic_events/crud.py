@@ -7,7 +7,7 @@ import sentry_sdk
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/.."))
 
-from sqlalchemy.orm import Session, object_session
+from sqlalchemy.orm import Session
 from epic_events.models import Client, Contract, Event, Role, User
 from datetime import datetime, timezone
 

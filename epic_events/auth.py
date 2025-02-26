@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
-from pathlib import Path
 from epic_events.models import User
 
 # Configuration
