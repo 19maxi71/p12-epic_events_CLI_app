@@ -8,7 +8,8 @@ from epic_events.crud import (
     update_contract as crud_update_contract,
     update_event as crud_update_event,
     filter_events_by_role,
-    filter_contracts_by_role
+    filter_contracts_by_role,
+    update_user_details 
 )
 from epic_events.models import User
 from rich import print
@@ -330,6 +331,31 @@ def test_sentry():
         typer.echo("[bold red]Test error generated and sent to Sentry![/bold red]")
         # Re-raise the error to show the traceback
         raise
+
+@app.command()
+def update_user(
+    target_email: str = typer.Option(..., prompt=True),
+    new_name: str = typer.Option(None, "--name", help="New full name"),
+    new_email: str = typer.Option(None, "--email", help="New email address"),
+    new_password: str = typer.Option(None, "--password", help="New password", hide_input=True)
+):
+    """Update user details (Admin only)."""
+    session = next(get_db())
+    user = get_current_user(session)
+    
+    if not user:
+        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        return
+
+    updates = {}
+    if new_name:
+        updates['full_name'] = new_name
+    if new_email:
+        updates['email'] = new_email
+    if new_password:
+        updates['password'] = new_password
+
+    update_user_details(session, user, target_email, **updates)
 
 if __name__ == "__main__":
     app()

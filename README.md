@@ -1,6 +1,6 @@
 # Epic Events CRM
 
-A CLI application for managing client relationships, contracts, and events.
+A secure CLI application for managing client relationships, contracts, and events.
 
 ## Setup
 
@@ -13,7 +13,7 @@ cd epic-events-cli
 2. Create and activate virtual environment:
 ```bash
 python -m venv env
-source env/bin/activate
+source env/bin/activate  # On macOS/Linux
 ```
 
 3. Install required packages:
@@ -21,47 +21,113 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Configure environment variables:
+4. Set up environment variables:
 ```bash
 cp .env.example .env
-# Edit .env with your Sentry DSN and other configurations
+# Edit .env and add your:
+# - SENTRY_DSN
+# - DATABASE_URL (default: sqlite:///database.db)
+# - ENVIRONMENT (development/production)
 ```
 
-5. Initialize database (first time setup only)
+5. Initialize database:
 ```bash
 python init_db.py
 ```
 
-6. (Optional) Add test data for development:
-```bash
-python seed_test_data.py
-```
+## Database Schema
+
+- Users (id, full_name, email, password_hash, role_id)
+- Roles (id, name)
+- Clients (id, full_name, email, phone, company_name)
+- Contracts (id, client_id, total_amount, amount_due, signed)
+- Events (id, contract_id, support_contact, start_date, end_date, location, attendees)
+
 ## Usage
 
-Basic commands:
+### Authentication
 ```bash
-# Login first
+# Login (required before other operations)
 python -m epic_events.cli login <email> <password>
 
-# Then you can use other commands
-python -m epic_events.cli list-clients
-python -m epic_events.cli list-contracts
-python -m epic_events.cli list-events
+# Logout
+python -m epic_events.cli logout
 ```
 
-See `python -m epic_events.cli --help` for all commands.
+### Client Operations
+```bash
+# List all clients
+python -m epic_events.cli list-clients
+
+# Add new client (Commercial/Admin only)
+python -m epic_events.cli add-new-client
+```
+
+### Contract Operations
+```bash
+# List contracts
+python -m epic_events.cli list-contracts
+
+# Add contract (Commercial/Admin only)
+python -m epic_events.cli add-new-contract
+```
+
+### Event Operations
+```bash
+# List events
+python -m epic_events.cli list-events
+
+# Filter events
+python -m epic_events.cli filter-events --location "Paris"
+```
 
 ## Error Tracking
 
-The application uses Sentry for:
-- Unexpected exceptions
-- User authentication attempts
-- Contract signatures
-- Performance monitoring
+Sentry integration monitors:
+- All unexpected exceptions
+- User creation/modification events
+- Contract signature events
+- Performance metrics
 
-## Security
+## Security Measures
 
-- All sensitive data is stored in `.env`
-- Passwords are hashed
+- Environment variables for sensitive data
+- Password hashing with bcrypt
 - Role-based access control
 - Session management
+- No sensitive data in version control
+
+## Development
+
+1. Set up test data:
+```bash
+python seed_test_data.py
+```
+
+2. Default admin credentials:
+```
+Email: admin@email.com
+Password: securepassword
+```
+
+## Project Structure
+
+```
+epic_events/
+├── cli.py          # Command-line interface
+├── config.py       # Configuration and Sentry setup
+├── models.py       # Database models
+├── crud.py         # Database operations
+├── auth.py         # Authentication logic
+└── utils.py        # Utility functions
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.

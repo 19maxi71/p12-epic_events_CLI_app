@@ -615,3 +615,40 @@ def filter_contracts(session: Session, user: User,
 
     except Exception as e:
         print(f"[bold red]Error filtering contracts: {str(e)}[/bold red]")
+
+def update_user_details(session: Session, user: User, target_email: str, **updates):
+    """Update user details (Admin only)."""
+    try:
+        # Check if user is admin
+        if user.role_id != 1:
+            print("[bold red]Error: Only Admin can modify user details.[/bold red]")
+            return
+
+        # Find target user
+        target_user = session.query(User).filter(User.email == target_email).first()
+        if not target_user:
+            print("[bold red]Error: User not found.[/bold red]")
+            return
+
+        # Update fields
+        if 'full_name' in updates:
+            target_user.full_name = updates['full_name']
+        if 'email' in updates:
+            target_user.email = updates['email']
+        if 'password' in updates:
+            target_user.set_password(updates['password'])
+
+        session.commit()
+
+        # Log to Sentry
+        sentry_sdk.capture_message(
+            f"User updated: {target_user.full_name}",
+            level="info"
+        )
+        
+        print(f"[bold green]User details updated successfully![/bold green]")
+        
+    except Exception as e:
+        session.rollback()
+        sentry_sdk.capture_exception(e)
+        raise
