@@ -80,7 +80,8 @@ def delete_client(session: Session, user: User, client_id: int):
 def get_all_clients(session: Session, user: User):
     """GET all clients from the database. 
     Everyone can read, but only authorized roles can edit."""
-    clients = session.query(Client).all()
+    with sentry_sdk.start_span(op="db", description="fetch_all_clients"):
+        clients = session.query(Client).all()
     
     
     table_of_clients = Table(

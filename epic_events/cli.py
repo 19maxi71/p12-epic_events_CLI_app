@@ -19,6 +19,11 @@ from epic_events.auth import (
     create_token, save_token
 )
 from datetime import datetime
+from sentry_sdk import init as sentry_init
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+import sentry_sdk
+
+
 """Initialize the Typer app.
 This is the entry point of the CLI.
 """
@@ -76,14 +81,15 @@ def add_new_client(
 @app.command()
 def list_clients():
     """List all clients (Read-Only for unauthorized users)."""
-    session = next(get_db())
-    user = get_current_user(session)
-    
-    if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
-        return
+    with sentry_sdk.start_transaction(op="command", name="list_clients"):
+        session = next(get_db())
+        user = get_current_user(session)
         
-    get_all_clients(session, user)
+        if not user:
+            typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+            return
+            
+        get_all_clients(session, user)
 
 @app.command()
 def add_new_contract(
@@ -311,6 +317,19 @@ def filter_contracts():
         return
 
     filter_contracts_by_role(session, user)
+
+@app.command()
+def test_sentry():
+    """Test Sentry error tracking by raising a test error."""
+    try:
+        typer.echo("[bold yellow]Testing Sentry integration [/bold yellow]")
+        division_by_zero = 1 / 0
+    except ZeroDivisionError as e:
+        # Explicitly capture and send the error to Sentry
+        sentry_sdk.capture_exception(e)
+        typer.echo("[bold red]Test error generated and sent to Sentry![/bold red]")
+        # Re-raise the error to show the traceback
+        raise
 
 if __name__ == "__main__":
     app()
