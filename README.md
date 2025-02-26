@@ -16,12 +16,12 @@ python -m venv env
 source env/bin/activate  # On macOS/Linux
 ```
 
-3. Install required packages:
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Set up environment variables:
+4. Environment Setup:
 ```bash
 cp .env.example .env
 # Edit .env and add your:
@@ -44,6 +44,15 @@ python init_db.py
 - Events (id, contract_id, support_contact, start_date, end_date, location, attendees)
 
 ## Usage
+
+First login:
+```bash
+python -m epic_events.cli login <email> <password>
+```
+
+Default admin credentials:
+- Email: mail
+- Password: 12345
 
 ### Authentication
 ```bash
@@ -89,13 +98,34 @@ Sentry integration monitors:
 - Contract signature events
 - Performance metrics
 
-## Security Measures
+## Security
 
-- Environment variables for sensitive data
-- Password hashing with bcrypt
+- All sensitive data stored in .env
+- Passwords hashed with bcrypt
 - Role-based access control
-- Session management
 - No sensitive data in version control
+
+## Role Permissions
+- Admin: Full access
+- Commercial: Client and contract management
+- Support: Event management
+- Gestion: Contract and event oversight
+
+| Operation              | Admin (1) | Commercial (2)| Support (3) | Gestion (4) |
+|------------------------|:---------:|:-------------:|:-----------:|:-----------:|
+| User Management        |     ✅    |       ❌       |     ❌      |     ❌      |
+| Create Clients         |     ✅    |       ✅       |     ❌      |     ❌      |
+| View Clients           |     ✅    |       ✅       |     ✅      |     ✅      |
+| Update Clients         |     ✅    |       ✅       |     ❌      |     ❌      |
+| Create Contracts       |     ✅    |       ✅       |     ❌      |     ❌      |
+| View Contracts         |     ✅    |       ✅       |     ✅      |     ✅      |
+| Update Contracts       |     ✅    |       ✅       |     ❌      |     ✅      |
+| Create Events          |     ✅    |       ❌       |     ❌      |     ✅      |
+| View Events            |     ✅    |       ✅       |     ✅      |     ✅      |
+| Update Events          |     ✅    |       ❌       |     ✅      |     ✅      |
+| View Reports           |     ✅    |       ✅       |     ✅      |     ✅      |
+
+Note: Numbers in parentheses represent role_id in the database.
 
 ## Development
 
