@@ -43,6 +43,57 @@ python init_db.py
 - Contracts (id, client_id, total_amount, amount_due, signed)
 - Events (id, contract_id, support_contact, start_date, end_date, location, attendees)
 
+## Class Diagram
+
+```mermaid
+classDiagram
+    class User {
+        +id: Integer
+        +full_name: String
+        +email: String
+        +password_hash: String
+        +role_id: Integer
+        +set_password()
+        +check_password()
+    }
+
+    class Role {
+        +id: Integer
+        +name: String
+    }
+
+    class Client {
+        +id: Integer
+        +full_name: String
+        +email: String
+        +phone: String
+        +company_name: String
+    }
+
+    class Contract {
+        +id: Integer
+        +client_id: Integer
+        +total_amount: Float
+        +amount_due: Float
+        +signed: Boolean
+    }
+
+    class Event {
+        +id: Integer
+        +contract_id: Integer
+        +support_contact: String
+        +start_date: DateTime
+        +end_date: DateTime
+        +location: String
+        +attendees: Integer
+        +notes: String
+    }
+
+    User "1" -- "1" Role : has
+    Client "1" -- "*" Contract : has
+    Contract "1" -- "*" Event : has
+```
+
 ## Usage
 
 First login:
