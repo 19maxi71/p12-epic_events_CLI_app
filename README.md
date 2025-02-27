@@ -185,12 +185,6 @@ Note: Numbers in parentheses represent role_id in the database.
 python seed_test_data.py
 ```
 
-2. Default admin credentials:
-```
-Email: admin@email.com
-Password: securepassword
-```
-
 ## Test Data Generation
 
 To populate the database with sample data:
