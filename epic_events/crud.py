@@ -504,7 +504,7 @@ def _display_events_table(events):
             str(event.id),
             str(event.contract_id),
             event.support_contact or "Unassigned",
-            event.start_date.strftime("%Y-%m-%d"),
+            event.start_date.strftime("%d/%m/%Y"),  # Changed to French format
             event.location,
             str(event.attendees)
         )

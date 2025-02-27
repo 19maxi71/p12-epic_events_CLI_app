@@ -124,8 +124,8 @@ def list_contracts():
 def add_new_event(
     contract_id: int = typer.Option(..., prompt=True),
     support_contact: str = typer.Option(..., prompt=True),
-    start_date: str = typer.Option(..., prompt=True, help="Format: YYYY-MM-DD HH:MM"),
-    end_date: str = typer.Option(..., prompt=True, help="Format: YYYY-MM-DD HH:MM"),
+    start_date: str = typer.Option(..., prompt=True, help="Format: DD/MM/YYYY HH:MM"),
+    end_date: str = typer.Option(..., prompt=True, help="Format: DD/MM/YYYY HH:MM"),
     location: str = typer.Option(..., prompt=True),
     attendees: int = typer.Option(..., prompt=True),
     notes: str = typer.Option("", prompt=True, help="Optional notes about the event")
@@ -139,9 +139,9 @@ def add_new_event(
         return
 
     try:
-        # Convert string dates to datetime objects
-        start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-        end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+        # Convert French format to datetime objects
+        start_datetime = datetime.strptime(start_date, "%d/%m/%Y")
+        end_datetime = datetime.strptime(end_date, "%d/%m/%Y")
         
         # If notes is empty string, set to None
         notes = notes if notes else None
@@ -158,7 +158,7 @@ def add_new_event(
             notes=notes
         )
     except ValueError as e:
-        typer.echo("[bold red]Error: Invalid date format. Use YYYY-MM-DD[/bold red]")
+        typer.echo("[bold red]Error: Invalid date format. Use DD/MM/YYYY[/bold red]")
     except Exception as e:
         typer.echo(f"[bold red]Error creating event: {str(e)}[/bold red]")
 
