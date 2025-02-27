@@ -178,12 +178,6 @@ Sentry integration monitors:
 
 Note: Numbers in parentheses represent role_id in the database.
 
-## Development
-
-1. Set up test data:
-```bash
-python seed_test_data.py
-```
 
 ## Test Data Generation
 
