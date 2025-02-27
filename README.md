@@ -97,7 +97,7 @@ classDiagram
         +notes: String
     }
 
-    User "1" -- "1" Role : has
+    User "1" -- "*" Role : has
     Client "1" -- "*" Contract : has
     Contract "1" -- "*" Event : has
 ```
