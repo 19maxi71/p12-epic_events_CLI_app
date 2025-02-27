@@ -3,11 +3,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from epic_events.models import User
+from epic_events.config import JWT_SECRET_KEY
 
 # Configuration
-SECRET_KEY = "your-secret-key"  # In production, use environment variable
+SECRET_KEY = JWT_SECRET_KEY
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 h
 TOKEN_FILE = os.path.expanduser("~/.epic_events/token")
 
 def create_token(user_email: str, role: str) -> str:

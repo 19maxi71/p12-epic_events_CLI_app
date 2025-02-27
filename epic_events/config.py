@@ -4,9 +4,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import sentry_sdk
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+import secrets
 
 # Load environment variables
 load_dotenv()
+
+# Generate a secure key if not provided
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', secrets.token_urlsafe(32))
 
 # Database configuration
 DATABASE_URL = os.getenv('DATABASE_URL', "sqlite:///database.db")

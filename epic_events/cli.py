@@ -1,4 +1,6 @@
 import typer
+from rich import print
+from rich.console import Console
 from epic_events.config import SessionLocal
 from epic_events.crud import (
     add_client, get_all_clients, add_contract, get_all_contracts, 
@@ -10,19 +12,15 @@ from epic_events.crud import (
     filter_contracts_by_role,
     update_user_details 
 )
-from epic_events.models import User
-from rich import print
-from rich.console import Console
-from rich.table import Table
 from epic_events.auth import ( 
     get_current_user, clear_current_user, 
     create_token, save_token
 )
 from datetime import datetime
-from sentry_sdk import init as sentry_init
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 import sentry_sdk
 
+
+console = Console() 
 
 """Initialize the Typer app.
 This is the entry point of the CLI.
@@ -51,15 +49,15 @@ def login(email: str, password: str):
     if user:
         token = create_token(user.email, user.role.name)
         save_token(token)
-        typer.echo(f"[bold green]Logged in as: {user.full_name} (Role: {user.role.name})[/bold green]")
+        print(f"[bold green]Logged in as: {user.full_name} (Role: {user.role.name})[/bold green]")
     else:
-        typer.echo("[bold red]Login failed.[/bold red]")
+        print("[bold red]Login failed.[/bold red]")
 
 @app.command()
 def logout():
     """Logout current user"""
     clear_current_user()
-    typer.echo("[bold green]Logged out successfully![/bold green]")
+    print("[bold green]Logged out successfully![/bold green]")
 
 @app.command()
 def add_new_client(
@@ -73,7 +71,7 @@ def add_new_client(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
         
     add_client(session, user, full_name, email, phone, company_name)
@@ -86,7 +84,7 @@ def list_clients():
         user = get_current_user(session)
         
         if not user:
-            typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+            print("[bold red]Please login first: epic-events login[/bold red]")
             return
             
         get_all_clients(session, user)
@@ -103,7 +101,7 @@ def add_new_contract(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
         
     add_contract(session, user, client_id, total_amount, amount_due, signed)
@@ -115,7 +113,7 @@ def list_contracts():
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
     
     get_all_contracts(session, user)
@@ -135,7 +133,7 @@ def add_new_event(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
 
     try:
@@ -158,9 +156,9 @@ def add_new_event(
             notes=notes
         )
     except ValueError as e:
-        typer.echo("[bold red]Error: Invalid date format. Use DD/MM/YYYY[/bold red]")
+        print("[bold red]Error: Invalid date format. Use DD/MM/YYYY[/bold red]")
     except Exception as e:
-        typer.echo(f"[bold red]Error creating event: {str(e)}[/bold red]")
+        print(f"[bold red]Error creating event: {str(e)}[/bold red]")
 
 @app.command()
 def list_events():
@@ -169,7 +167,7 @@ def list_events():
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
     
     get_all_events(session, user)
@@ -187,7 +185,7 @@ def update_client(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
 
     crud_update_client( 
@@ -212,7 +210,7 @@ def update_contract(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
 
     crud_update_contract(
@@ -239,7 +237,7 @@ def update_event(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
 
     try:
@@ -264,9 +262,9 @@ def update_event(
             notes=notes
         )
     except ValueError as e:
-        typer.echo("[bold red]Error: Invalid date format. Use YYYY-MM-DD[/bold red]")
+        print("[bold red]Error: Invalid date format. Use YYYY-MM-DD[/bold red]")
     except Exception as e:
-        typer.echo(f"[bold red]Error updating event: {str(e)}[/bold red]")
+        print(f"[bold red]Error updating event: {str(e)}[/bold red]")
 
 @app.command()
 def filter_events(
@@ -283,7 +281,7 @@ def filter_events(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
 
     # Convert dates if provided
@@ -313,7 +311,7 @@ def filter_contracts():
     user = get_current_user(session)
 
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
 
     filter_contracts_by_role(session, user)
@@ -322,12 +320,12 @@ def filter_contracts():
 def test_sentry():
     """Test Sentry error tracking by raising a test error."""
     try:
-        typer.echo("[bold yellow]Testing Sentry integration [/bold yellow]")
+        print("[bold yellow]Testing Sentry integration [/bold yellow]")
         division_by_zero = 1 / 0
     except ZeroDivisionError as e:
-        # Explicitly capture and send the error to Sentry
+        # Capture and send the error to Sentry
         sentry_sdk.capture_exception(e)
-        typer.echo("[bold red]Test error generated and sent to Sentry![/bold red]")
+        print("[bold red]Test error generated and sent to Sentry![/bold red]")
         # Re-raise the error to show the traceback
         raise
 
@@ -343,7 +341,7 @@ def update_user(
     user = get_current_user(session)
     
     if not user:
-        typer.echo("[bold red]Please login first: epic-events login[/bold red]")
+        print("[bold red]Please login first: epic-events login[/bold red]")
         return
 
     updates = {}

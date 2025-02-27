@@ -22,13 +22,21 @@ pip install -r requirements.txt
 ```
 
 4. Environment Setup:
+
+1. Copy the environment template:
 ```bash
-cp .env.example .env
-# Edit .env and add your:
-# - SENTRY_DSN
-# - DATABASE_URL (default: sqlite:///database.db)
-# - ENVIRONMENT (development/production)
+cp .env.template .env
 ```
+
+2. Generate a secure JWT key:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+3. Update `.env` with:
+- Your generated JWT key
+- Your Sentry DSN
+- Appropriate database URL
 
 5. Initialize database:
 ```bash
